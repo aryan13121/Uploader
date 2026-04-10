@@ -1,7 +1,7 @@
-FROM python:3.9.7-slim-buster
+FROM python:3.10-slim
 
-WORKDIR .
-RUN apt -qq update && apt -qq install -y git wget pv jq python3-dev ffmpeg mediainfo
+WORKDIR /app
+RUN apt-get update && apt-get install -y git wget pv jq python3-dev ffmpeg mediainfo
 COPY . .
 RUN pip3 install -r requirements.txt
 
