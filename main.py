@@ -34,7 +34,7 @@ bot = Client("bot",
              bot_token=os.environ.get("BOT_TOKEN", "8659589420:AAG5yM6ZQKxZzVLvGe1NQSF0_EogMtZpjQw"),
              api_id=int(os.environ.get("API_ID", "25531611")),
              api_hash=os.environ.get("API_HASH", "2f63a48be678dfea4ad03e495377403f"))
-auth_users = [8553304761]
+auth_users = [8553304761, 8564849592]
 
 owner_id = 8553304761
 failed_links = []
