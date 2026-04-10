@@ -36,7 +36,7 @@ bot = Client("bot",
              api_hash=os.environ.get("API_HASH", "2f63a48be678dfea4ad03e495377403f"))
 auth_users = [8553304761, 8564849592]
 
-owner_id = 8553304761
+owner_id = [8553304761,8564849592]
 failed_links = []
 fail_cap = f"**➜ This file Contain Failed Downloads while Downloding \n You Can Retry them one more time **"
 
