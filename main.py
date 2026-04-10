@@ -166,8 +166,9 @@ async def myplan_command_handler(bot, message):
 
 @bot.on_message(filters.command("stop"))
 async def stop_handler(_, m):
+    global processing_request
     if failed_links:
-        error_file_send = await m.reply_text("**📤 Sending you Failed Downloads List Before Stopping**")
+        error_file_send = await m.reply_text("**📤 Sending Failed Downloads List Before Stopping**")
         with open("failed_downloads.txt", "w") as f:
             for link in failed_links:
                 f.write(link + "\n")
@@ -175,7 +176,6 @@ async def stop_handler(_, m):
         await error_file_send.delete()
         os.remove('failed_downloads.txt')
         failed_links.clear()
-    global processing_request
     processing_request = False
     await m.reply_text("🚦**STOPPED**🚦", True)
     os.execl(sys.executable, sys.executable, *sys.argv)
@@ -308,6 +308,7 @@ async def account_login(bot: Client, m: Message):
 
     try:
         for i in range(count - 1, int(input9.text)):
+            key = ""
             V = links[i][1].replace("file/d/", "uc?export=download&id=") \
                 .replace("www.youtube-nocookie.com/embed", "youtu.be") \
                 .replace("?modestbranding=1", "") \
@@ -325,11 +326,14 @@ async def account_login(bot: Client, m: Message):
                         text = await resp.text()
                         url = re.search(r"(https://.*?playlist.m3u8.*?)\"", text).group(1)
 
-            elif 'videos.classplusapp' in url:
-                url = requests.get(
-                    f'https://api.classplusapp.com/cams/uploader/video/jw-signed-url?url={url}',
-                    headers={'x-access-token': 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJpZCI6MzgzNjkyMTIsIm9yZ0lkIjoyNjA1LCJ0eXBlIjoxLCJtb2JpbGUiOiI5MTcwODI3NzQyODkiLCJuYW1lIjoiQWNlIiwiZW1haWwiOm51bGwsImlzRmlyc3RMb2dpbiI6dHJ1ZSwiZGVmYXVsdExhbmd1YWdlIjpudWxsLCJjb3VudHJ5Q29kZSI6IklOIiwiaXNJbnRlcm5hdGlvbmFsIjowLCJpYXQiOjE2NDMyODE4NzcsImV4cCI6MTY0Mzg4NjY3N30.hM33P2ai6ivdzxPPfm01LAd4JWv-vnrSxGXqvCirCSpUfhhofpeqyeHPxtstXwe0'}
-                ).json()['url']
+            elif 'videos.classplusapp' in url or 'media-cdn.classplusapp' in url:
+                try:
+                    url = requests.get(
+                        f'https://api.classplusapp.com/cams/uploader/video/jw-signed-url?url={url}',
+                        headers={'x-access-token': 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJpZCI6MzgzNjkyMTIsIm9yZ0lkIjoyNjA1LCJ0eXBlIjoxLCJtb2JpbGUiOiI5MTcwODI3NzQyODkiLCJuYW1lIjoiQWNlIiwiZW1haWwiOm51bGwsImlzRmlyc3RMb2dpbiI6dHJ1ZSwiZGVmYXVsdExhbmd1YWdlIjpudWxsLCJjb3VudHJ5Q29kZSI6IklOIiwiaXNJbnRlcm5hdGlvbmFsIjowLCJpYXQiOjE2NDMyODE4NzcsImV4cCI6MTY0Mzg4NjY3N30.hM33P2ai6ivdzxPPfm01LAd4JWv-vnrSxGXqvCirCSpUfhhofpeqyeHPxtstXwe0'}
+                    ).json()['url']
+                except:
+                    pass
 
             name1 = links[i][0].replace("\t", "").replace(":", "").replace("/", "").replace("+", "").replace("#", "").replace("|", "").replace("@", "").replace("*", "").replace(".", "").replace("https", "").replace("http", "").strip()
             name = f'{name1[:60]}'
@@ -341,12 +345,7 @@ async def account_login(bot: Client, m: Message):
             if "youtu" in url:
                 ytf = f"b[height<={raw_text2}][ext=mp4]/bv[height<={raw_text2}][ext=mp4]+ba[ext=m4a]/b[ext=mp4]"
             else:
-                ytf = f"bestvideo.{quality}"
-
-            if "jw-prod" in url:
-                cmd = f'yt-dlp -o "{name}.mp4" "{url}"'
-            else:
-                cmd = f'yt-dlp -f "{ytf}" --no-keep-video --remux-video mkv "{url}" -o "romeo.mp4"'
+                ytf = f"bestvideo[height<={raw_text2}]+bestaudio/best"
 
             try:
                 cc = f'**➭ Index » {str(count).zfill(3)}**\n**➭ Title » {name1}.mkv**\n**➭ Batch » {b_name}**\n**➭ Quality » {raw_text2}**\n\n✨ **Downloaded By : {CR}**\n**━━━━━━━✦✗✦━━━━━━━**'
@@ -400,12 +399,16 @@ async def account_login(bot: Client, m: Message):
                 else:
                     prog = await m.reply_text(f"📥 **Downloading**\n\n**➭ Count » {str(count).zfill(3)}**\n**➭ Video Name »** `{name}`\n**➭ Quality »** `{raw_text2}`\n**➭ URL »** `{url}`\n\n✨ **Bot By @EX_DOLPHIN**\n**━━━━━━━✦✗✦━━━━━━━**")
                     time.sleep(2)
-                    key = ""
                     try:
                         key = await helper.get_drm_keys(url)
                     except:
-                        pass
-                    res_file = await helper.drm_download_video(url, quality, name, key)
+                        key = ""
+                    if ".mpd" in url:
+                        res_file = await helper.drm_download_video(url, quality, name, key)
+                    else:
+                        cmd = f'yt-dlp -f "{ytf}" --no-keep-video --remux-video mkv "{url}" -o "{name}.mkv"'
+                        os.system(cmd)
+                        res_file = f"{name}.mkv"
                     filename = res_file
                     await prog.delete(True)
                     time.sleep(1)
